@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/tenis_table.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/tenis_table.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/tenis_table.main.iml" filepath="$PROJECT_DIR$/.idea/modules/tenis_table.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/tenis_table.test.iml" filepath="$PROJECT_DIR$/.idea/modules/tenis_table.test.iml" />
     </modules>
