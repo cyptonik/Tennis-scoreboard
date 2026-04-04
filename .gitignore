@@ -1,12 +1,18 @@
-.gradle
+.gradle/
 
-.kotlin
+.kotlin/
 
-.idea
+.idea/
 
-build
+build/
+
+app/build/
 
 deploy.sh
+
+.project
+
+.settings
 
 *.mv.db
 *.trace.db
