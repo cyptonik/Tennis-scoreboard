@@ -2,6 +2,7 @@ package listener;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import dto.MatchScore;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
@@ -11,23 +12,22 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.dialect.H2Dialect;
+import service.MatchService;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @WebListener
 public class AppContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
-            Class.forName("org.h2.Driver"); // явная регистрация
+            Class.forName("org.h2.Driver");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -39,31 +39,25 @@ public class AppContextListener implements ServletContextListener {
         config.setMaximumPoolSize(10);
         HikariDataSource dataSource = new HikariDataSource(config);
 
-        try (Connection conn = dataSource.getConnection()) {
-            String sql = new String(
-                        getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes()
-                );
-            conn.createStatement().execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        initializeDatabaseTables(dataSource);
 
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("INSERT INTO Players (name) VALUES ('Alice')");
-            stmt.execute("INSERT INTO Players (name) VALUES ('Bob')");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+                .configure()
+                .applySetting("hibernate.connection.datasource", dataSource)
+                .build();
 
-        Configuration configuration = new Configuration();
-        configuration.configure();
-        SessionFactory sessionFactory = configuration.buildSessionFactory();
-
-        sce.getServletContext().setAttribute("dataSource", dataSource);
+        SessionFactory sessionFactory = new MetadataSources(registry)
+                .addAnnotatedClass(Player.class)
+                .addAnnotatedClass(Match.class)
+                .buildMetadata()
+                .buildSessionFactory();
         sce.getServletContext().setAttribute("sessionFactory", sessionFactory);
+
+        MatchService matchService = new MatchService(sessionFactory);
+        sce.getServletContext().setAttribute("matchService", matchService);
+
+        Map<UUID, MatchScore> ongoingMatches = new ConcurrentHashMap<>();
+        sce.getServletContext().setAttribute("ongoingMatches", ongoingMatches);
     }
 
     @Override
@@ -73,5 +67,16 @@ public class AppContextListener implements ServletContextListener {
 
         HikariDataSource ds = (HikariDataSource) sce.getServletContext().getAttribute("dataSource");
         if (ds != null) ds.close();
+    }
+
+    private void initializeDatabaseTables(DataSource dataSource) {
+        try (Connection conn = dataSource.getConnection()) {
+            String sql = new String(
+                    getClass().getClassLoader().getResourceAsStream("schema.sql").readAllBytes()
+            );
+            conn.createStatement().execute(sql);
+        } catch (SQLException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
