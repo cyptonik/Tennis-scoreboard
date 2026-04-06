@@ -1,18 +1,18 @@
-.gradle/
+src/.gradle/
 
-.kotlin/
+src/.kotlin/
 
-.idea/
+src/.idea/
 
-build/
+src/build/
 
-app/build/
+src/app/build/
 
-deploy.sh
+src/deploy.sh
 
-.project
+src/.project
 
-.settings
+src/.settings
 
 *.mv.db
 *.trace.db
