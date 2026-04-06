@@ -20,6 +20,7 @@ public class PlayerService {
             return session.createQuery("FROM Player", Player.class).list()
                     .stream()
                     .map(PlayerMapper::toDto)
+                    .sorted((p1, p2) -> p1.getId().compareTo(p2.getId()))
                     .toList();
         }
     }
