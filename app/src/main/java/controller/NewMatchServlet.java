@@ -41,6 +41,6 @@ public class NewMatchServlet extends HttpServlet {
                 (Map<UUID, MatchScore>) getServletContext().getAttribute("ongoingMatches");
         ongoingMatches.put(matchScore.getId(), matchScore);
 
-        resp.sendRedirect("/tennis_app/match-score?uuid="+matchScore.getId());
+        resp.sendRedirect(req.getContextPath() + "/match-score?uuid="+matchScore.getId());
     }
 }
